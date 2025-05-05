@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "playwright test --headed --workers=1 --retries=0",
+    "test:ci": "playwright test --workers=2 --retries=1",
     "test:contact": "playwright test tests/specs/contact.spec.ts --headed --workers=1",
     "test:shopping": "playwright test tests/specs/shopping.spec.ts --headed --workers=1",
     "debug": "npx playwright test --debug",
@@ -21,8 +22,5 @@
     "@types/node": "^22.13.4",
     "prettier": "3.5.1",
     "typescript": "^5.7.3"
-  },
-  "dependencies": {
-    "winston": "^2.4.6"
   }
 }
