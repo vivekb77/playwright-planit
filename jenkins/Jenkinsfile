@@ -1,0 +1,76 @@
+pipeline {
+    agent {
+        docker {
+            image 'mcr.microsoft.com/playwright:v1.50.0-jammy'
+        }
+    }
+    
+    environment {
+        // Define environment variables
+        CI = 'true'
+    }
+    
+    stages {
+        stage('Setup') {
+            steps {
+                // Checkout code from repository
+                checkout scm
+                
+                // Install dependencies
+                sh 'npm ci'
+                
+                // Install Playwright browsers
+                sh 'npx playwright install --with-deps chromium'
+            }
+        }
+        
+        stage('Lint') {
+            steps {
+                // Run code formatting check
+                sh 'npm run format -- --check'
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                // Run Playwright tests
+                sh 'npm run test:ci'
+            }
+            
+            post {
+                always {
+                    // Archive test results
+                    junit 'test-results/junit-report.xml'
+                    
+                    // Archive HTML report
+                    publishHTML(target: [
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'playwright-report',
+                        reportFiles: 'index.html',
+                        reportName: 'Playwright Report'
+                    ])
+                    
+                    // Archive test artifacts (screenshots, videos, traces)
+                    archiveArtifacts artifacts: 'test-results/**/*', allowEmptyArchive: true
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            // Clean workspace
+            cleanWs()
+        }
+        
+        success {
+            echo 'All tests passed successfully!'
+        }
+        
+        failure {
+            echo 'Tests failed! Check the reports for details.'
+        }
+    }
+}
